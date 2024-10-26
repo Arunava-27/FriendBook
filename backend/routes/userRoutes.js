@@ -6,7 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const logger = require('../utils/logger'); // Import logger
 const User = require('../models/User');
-const { getUserProfile } = require('../controllers/userController');
+const { getUserProfile, updateUserPassword, updateUserProfile } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -79,7 +79,26 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/search', protect, async (req, res) => {
+  try {
+    const query = req.query.query;
+    const users = await User.find({ fullName: { $regex: query, $options: 'i' } }).select("fullName _id");
+    res.json(users);
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Error searching users" });
+  }
+});
+
+
 // Route to get logged-in user's profile
 router.get('/profile', protect, getUserProfile);
+
+// route to upade user data and password
+// Update profile information
+router.put('/update', protect, updateUserProfile);
+
+// Update password
+router.put('/update-password', protect, updateUserPassword);
 
 module.exports = router;
